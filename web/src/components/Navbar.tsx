@@ -5,7 +5,7 @@ import { useState } from "react";
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   return (
-    <div className="border-b border-b-gray-300">
+    <div className="border-b border-b-gray-300 sticky top-0 z-50 bg-white">
       <div className="w-11/12 mx-auto container lg:flex lg:justify-between lg:my-4 lg:px-10 flex justify-between my-3">
         <Link
           to="/"

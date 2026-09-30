@@ -8,6 +8,7 @@ import {
   updateTaskSchema,
   taskIdSchema,
 } from "./validations/taskValidation.js";
+import { authMiddleware } from "./middlewares/authMiddleware.js";
 
 const app: Application = express();
 connectDB();
@@ -16,7 +17,7 @@ const PORT = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());
-app.post("/tasks", async (req, res) => {
+app.post("/tasks", authMiddleware, async (req, res) => {
   const date = new Date().toISOString().slice(0, 10);
   console.log(date);
   const result = createTaskSchema.safeParse(req.body);

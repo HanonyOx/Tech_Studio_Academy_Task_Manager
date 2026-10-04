@@ -1,18 +1,16 @@
-# TaskDuty — Task Manager
+# TaskDuty — Full-Stack Task Manager
 
-TaskDuty is a full-stack task management application built as part of my **Techstudio Academy internship**.
+TaskDuty is a full-stack task management application built as part of my **Techstudio Academy Internship**.
 
-The project was created to put the concepts I learned during the internship into practice, particularly **React, TypeScript, Express.js, MongoDB, Mongoose, REST APIs, Zod validation, and frontend state management**.
+The project was created to put the concepts I learned during the internship into practice, particularly **React, TypeScript, Express.js, MongoDB, Mongoose, REST APIs, Zod validation, authentication, authorization, JWT, bcrypt, and user-scoped data**.
 
-TaskDuty allows users to create, view, edit, delete, and filter tasks while keeping the frontend and backend connected through a RESTful API.
+TaskDuty allows users to register, log in, and securely manage their own tasks through a RESTful API.
 
 ---
 
 ## 📌 Project Overview
 
-Managing multiple tasks can become difficult when there is no simple way to organize them, track their status, and make changes when necessary.
-
-TaskDuty provides a simple interface for managing tasks.
+TaskDuty is a task management application that allows authenticated users to create and manage personal tasks.
 
 Each task contains:
 
@@ -21,181 +19,385 @@ Each task contains:
 * Due date
 * Category
 * Completion status
+* User ownership
 
 Users can:
 
+* Register an account
+* Log in
 * Create new tasks
-* View all tasks
+* View all of their tasks
 * View a single task
-* Edit existing tasks
-* Delete tasks
+* Edit their tasks
+* Delete their tasks
 * Filter tasks by category
 * Filter tasks by completion status
-* Combine category and status filters
 
-The application uses a React frontend and an Express.js backend connected to MongoDB.
+TaskDuty uses a **React + TypeScript frontend** and an **Express + TypeScript backend**, with MongoDB providing persistent data storage.
 
 ---
 
-## 🎓 Internship Context
+# 🎓 Internship Context
 
 **Task:** Task Manager
 **Program:** Techstudio Academy Internship
 **Type:** Full-Stack Web Application
 
-This project was developed as an internship task to demonstrate my understanding of full-stack web development.
+The project was developed in stages.
 
-The project allowed me to move beyond building static interfaces and understand how a frontend communicates with a backend, how data is stored in a database, how APIs are structured, and how validation is handled before data reaches the database.
+### Stage 1 — CRUD Operations
+
+The first stage focused on building the core task-management system and understanding:
+
+* Create, Read, Update, and Delete operations
+* REST APIs
+* Express routing
+* MongoDB and Mongoose
+* Zod validation
+* React state management
+* Frontend/backend communication
+
+### Stage 2 — Authentication, Authorization & User-Scoped Data
+
+The second stage expanded the backend by introducing:
+
+* User registration
+* User login
+* Password hashing
+* JWT authentication
+* Authentication middleware
+* Protected routes
+* Authorization
+* User-scoped tasks
+* Backend separation into routes, controllers, middleware, models, and validations
+
+This means tasks no longer exist as globally accessible data. Each task belongs to the user who created it.
 
 ---
 
 # 🚀 Features
 
-## 1. Create Tasks
+## 1. User Registration
 
-Users can create a new task by providing:
+New users can create an account through:
 
-* Task title
-* Description
-* Due date
-* Category
+```http
+POST /auth/register
+```
 
-The frontend sends the task information to the Express backend using a `POST` request.
-
-The backend validates the incoming data before creating the task in MongoDB.
+The registration process validates the incoming data and securely hashes the user's password before storing it in MongoDB.
 
 ---
 
-## 2. View All Tasks
+## 2. User Login
 
-The My Tasks page retrieves tasks from the backend through:
+Registered users can log in through:
 
-```text
-GET /tasks
+```http
+POST /auth/login
 ```
 
-The tasks are then displayed using reusable React components.
+After successful authentication, the backend generates a JWT that identifies the authenticated user.
 
-Each task card displays:
-
-* Task title
-* Description
-* Due date
-* Category
-* Completion status
-* Edit button
-* Delete button
-
----
-
-## 3. View a Single Task
-
-The application can retrieve an individual task using its MongoDB ID.
+The token can then be sent with protected requests:
 
 ```text
-GET /tasks/:id
-```
-
-This is mainly used when opening the edit page so that the existing task information can be loaded into the form.
-
----
-
-## 4. Edit Tasks
-
-Users can edit an existing task.
-
-The task ID is retrieved from the URL using React Router's:
-
-```text
-useParams()
-```
-
-The existing task is then fetched from the backend and used to populate the form.
-
-After editing, the frontend sends the updated information using:
-
-```text
-PUT /tasks/:id
+Authorization: Bearer <token>
 ```
 
 ---
 
-## 5. Delete Tasks
+## 3. Password Security
 
-Users can delete a task from the task list.
+Passwords are not stored directly in the database.
 
-Before deleting, the application displays a confirmation modal asking the user to confirm the action.
+TaskDuty uses **bcrypt** to hash passwords before they are stored.
 
-The backend handles the deletion through:
+This means the database stores a password hash rather than the user's original password.
+
+---
+
+## 4. JWT Authentication
+
+TaskDuty uses **JSON Web Tokens (JWT)** for authentication.
+
+After login:
 
 ```text
+User logs in
+      ↓
+Credentials validated
+      ↓
+JWT generated
+      ↓
+Token returned
+      ↓
+Token sent with protected requests
+```
+
+The backend verifies this token before allowing access to task endpoints.
+
+---
+
+## 5. Protected Task Routes
+
+All task-management endpoints are protected by authentication middleware.
+
+```text
+POST   /tasks
+GET    /tasks
+GET    /tasks/:id
+PUT    /tasks/:id
 DELETE /tasks/:id
 ```
 
-After a successful deletion, the task is also removed from the frontend state so the user immediately sees the updated task list.
+A valid JWT must be supplied before these routes can be accessed.
 
 ---
 
-## 6. Filter Tasks
+## 6. Create Tasks
 
-TaskDuty includes filtering functionality to make it easier to find specific tasks.
+Authenticated users can create tasks using:
 
-### Category Filter
-
-Users can enter a category into the filtering input.
-
-For example:
-
-```text
-School
+```http
+POST /tasks
 ```
 
-The application filters the tasks based on the category.
+Example:
 
-The category search is case-insensitive, meaning:
-
-```text
-School
-school
-SCHOOL
+```json
+{
+  "title": "Complete Backend Assignment",
+  "description": "Finish authentication and authorization",
+  "dueDate": "2026-10-10",
+  "category": "Work",
+  "completed": false
+}
 ```
 
-can match the same category.
+The backend validates the request and automatically attaches the authenticated user's ID to the task.
 
-### Completion Status Filter
-
-Users can also filter tasks by:
-
-* All Status
-* Completed
-* Pending
-
-The two filters can be used together.
-
-For example:
+Conceptually:
 
 ```text
-Category: School
-Status: Pending
+Task
+├── title
+├── description
+├── dueDate
+├── category
+├── completed
+└── userId
 ```
 
-will display only pending tasks belonging to the School category.
+The client does not decide who owns the task. Ownership comes from the authenticated user's JWT.
 
 ---
 
-## 7. Loading State
+## 7. View All Tasks
 
-When tasks are being retrieved from the backend, the application displays a loading spinner.
+Users can retrieve their tasks through:
 
-This prevents the page from appearing empty while the request is still being processed.
+```http
+GET /tasks
+```
+
+The backend does not return every task in the database.
+
+Instead, it searches using the authenticated user's ID:
+
+```text
+Find tasks where:
+
+userId = currently authenticated user
+```
+
+This keeps each user's task collection separate.
 
 ---
 
-## 8. Error Handling
+## 8. View a Single Task
 
-The application handles failed API requests.
+A specific task can be retrieved through:
 
-For example, if the backend is unavailable while the My Tasks page is loading, the application displays an error message instead of silently failing.
+```http
+GET /tasks/:id
+```
+
+The backend verifies both:
+
+```text
+Task ID matches
+AND
+Task userId matches authenticated user
+```
+
+This prevents one user from retrieving another user's task simply by knowing its MongoDB ID.
+
+---
+
+## 9. Update Tasks
+
+Users can update their own tasks through:
+
+```http
+PUT /tasks/:id
+```
+
+Before updating, the backend checks:
+
+1. The task ID is valid.
+2. The request body is valid.
+3. The user is authenticated.
+4. The task belongs to the authenticated user.
+5. The supplied due date is valid.
+
+Only after these checks is the task updated.
+
+---
+
+## 10. Delete Tasks
+
+Users can delete their own tasks through:
+
+```http
+DELETE /tasks/:id
+```
+
+The backend searches for the task using both the task ID and authenticated user's ID.
+
+If the task does not belong to that user, it is not returned and therefore cannot be deleted.
+
+---
+
+## 11. User-Scoped Data
+
+One of the major improvements introduced in Stage 2 is **user-scoped data**.
+
+Instead of:
+
+```text
+User A ──┐
+User B ──┼──→ All Tasks
+User C ──┘
+```
+
+TaskDuty now follows:
+
+```text
+User A
+├── Task 1
+└── Task 2
+
+User B
+├── Task 3
+└── Task 4
+```
+
+User A cannot read, update, or delete User B's tasks.
+
+This is enforced on the backend rather than relying on the frontend.
+
+---
+
+## 12. Filtering
+
+TaskDuty supports frontend filtering based on:
+
+* Category
+* Completion status
+
+Users can view:
+
+* All tasks
+* Completed tasks
+* Pending tasks
+
+Category and status filtering can also be combined.
+
+---
+
+## 13. Loading & Error States
+
+The frontend includes loading states while communicating with the backend.
+
+API failures are also handled so the user receives feedback when something goes wrong.
+
+---
+
+# 🔐 Authentication vs Authorization
+
+One of the important concepts explored while building TaskDuty was understanding the difference between authentication and authorization.
+
+### Authentication
+
+Authentication answers:
+
+> Who are you?
+
+TaskDuty handles this using:
+
+```text
+Email + Password
+       ↓
+Login
+       ↓
+JWT
+       ↓
+authMiddleware
+       ↓
+req.userId
+```
+
+### Authorization
+
+Authorization answers:
+
+> Are you allowed to perform this action on this resource?
+
+For example, being logged in does not automatically mean a user should be allowed to update every task.
+
+TaskDuty verifies task ownership using both:
+
+```text
+Task ID
++
+Authenticated User ID
+```
+
+before returning, updating, or deleting a task.
+
+---
+
+# 🛡️ Authentication Middleware
+
+Protected routes pass through `authMiddleware`.
+
+The middleware:
+
+1. Reads the Authorization header.
+2. Extracts the Bearer token.
+3. Verifies the JWT.
+4. Retrieves the authenticated user's ID.
+5. Attaches the ID to the Express request.
+6. Allows the request to continue.
+
+The flow is:
+
+```text
+Request
+   ↓
+Authorization: Bearer <token>
+   ↓
+authMiddleware
+   ↓
+Verify JWT
+   ↓
+req.userId
+   ↓
+Controller
+```
+
+Without a valid token, the protected operation is rejected.
 
 ---
 
@@ -221,67 +423,97 @@ For example, if the backend is unavailable while the My Tasks page is loading, t
 
 * MongoDB
 
+## Authentication & Security
+
+* JSON Web Token (JWT)
+* bcrypt
+* Authentication middleware
+* User-scoped authorization
+
 ## Validation
 
 * Zod
 
-## Development Tools
+## Development & Testing Tools
 
 * VS Code
 * Git
 * GitHub
 * npm
 * Concurrently
+* Postman
 
 ---
 
-# 🏗️ Application Architecture
+# 🏗️ Backend Architecture
 
-TaskDuty follows a simple client-server architecture.
+The backend is separated into different responsibilities instead of keeping the entire application inside `server.ts`.
 
 ```text
-                 ┌──────────────────────┐
-                 │      React App       │
-                 │      Frontend        │
-                 │    localhost:5173    │
-                 └──────────┬───────────┘
-                            │
-                            │ HTTP Requests
-                            │ REST API
-                            ▼
-                 ┌──────────────────────┐
-                 │    Express Server    │
-                 │      Backend         │
-                 │    localhost:3000    │
-                 └──────────┬───────────┘
-                            │
-                            │ Mongoose
-                            ▼
-                 ┌──────────────────────┐
-                 │       MongoDB        │
-                 │       Database       │
-                 └──────────────────────┘
+HTTP Request
+      ↓
+server.ts
+      ↓
+Routes
+      ↓
+Middleware
+      ↓
+Controllers
+      ↓
+Models
+      ↓
+MongoDB
 ```
 
-The frontend is responsible for:
+### Server
 
-* User interface
-* Forms
-* Navigation
-* Client-side state
-* Filtering
-* Sending API requests
-* Displaying API responses
+`server.ts` is responsible for:
 
-The backend is responsible for:
+* Creating the Express application
+* Connecting to MongoDB
+* Registering global middleware
+* Registering route groups
+* Starting the server
 
-* API endpoints
-* Validation
-* Database operations
-* Error handling
-* CRUD operations
+### Routes
 
-MongoDB is responsible for persistent task storage.
+Routes determine which controller handles a request.
+
+Examples:
+
+```text
+POST /auth/login → login controller
+GET /tasks       → getTasks controller
+DELETE /tasks/:id → deleteTask controller
+```
+
+### Middleware
+
+Middleware runs between the request and controller.
+
+`authMiddleware` verifies authentication before protected task controllers execute.
+
+### Controllers
+
+Controllers contain the main request-handling logic.
+
+Examples:
+
+* `register`
+* `login`
+* `createTask`
+* `getTasks`
+* `getTask`
+* `updateTask`
+* `deleteTask`
+
+### Models
+
+Mongoose models define how user and task documents are stored in MongoDB.
+
+### Validations
+
+Zod schemas validate incoming data before controllers perform database operations.
 
 ---
 
@@ -295,10 +527,23 @@ Task-manager/
 │   │   ├── config/
 │   │   │   └── db.ts
 │   │   │
+│   │   ├── controllers/
+│   │   │   ├── authController.ts
+│   │   │   └── tasksController.ts
+│   │   │
+│   │   ├── middlewares/
+│   │   │   └── authMiddleware.ts
+│   │   │
 │   │   ├── models/
+│   │   │   ├── user.ts
 │   │   │   └── tasks.ts
 │   │   │
+│   │   ├── routes/
+│   │   │   ├── authRoutes.ts
+│   │   │   └── tasksRoutes.ts
+│   │   │
 │   │   ├── validations/
+│   │   │   ├── authValidation.ts
 │   │   │   └── taskValidation.ts
 │   │   │
 │   │   └── server.ts
@@ -335,15 +580,13 @@ Task-manager/
 
 # 🔄 CRUD Operations
 
-TaskDuty implements the four basic CRUD operations.
-
-| Operation | HTTP Method | Endpoint     | Purpose           |
-| --------- | ----------- | ------------ | ----------------- |
-| Create    | POST        | `/tasks`     | Create a new task |
-| Read      | GET         | `/tasks`     | Get all tasks     |
-| Read      | GET         | `/tasks/:id` | Get one task      |
-| Update    | PUT         | `/tasks/:id` | Update a task     |
-| Delete    | DELETE      | `/tasks/:id` | Delete a task     |
+| Operation | HTTP Method | Endpoint     | Authentication | Purpose              |
+| --------- | ----------- | ------------ | -------------- | -------------------- |
+| Create    | POST        | `/tasks`     | Required       | Create a task        |
+| Read      | GET         | `/tasks`     | Required       | Get user's tasks     |
+| Read      | GET         | `/tasks/:id` | Required       | Get one owned task   |
+| Update    | PUT         | `/tasks/:id` | Required       | Update an owned task |
+| Delete    | DELETE      | `/tasks/:id` | Required       | Delete an owned task |
 
 CRUD stands for:
 
@@ -354,223 +597,243 @@ Update
 Delete
 ```
 
-These operations form the foundation of the application's backend functionality.
+All TaskDuty CRUD operations are now scoped to the authenticated user.
 
 ---
 
 # 🔌 API Endpoints
 
-## Create Task
+## Authentication
+
+### Register
+
+```http
+POST /auth/register
+```
+
+Creates a new user account.
+
+### Login
+
+```http
+POST /auth/login
+```
+
+Authenticates a user and returns a JWT.
+
+---
+
+## Tasks
+
+All task routes require:
+
+```http
+Authorization: Bearer <token>
+```
+
+### Create Task
 
 ```http
 POST /tasks
 ```
 
-Example request:
-
-```json
-{
-  "title": "Complete React Assignment",
-  "description": "Finish the React task for the internship",
-  "dueDate": "2026-09-30",
-  "category": "School"
-}
-```
-
----
-
-## Get All Tasks
+### Get User's Tasks
 
 ```http
 GET /tasks
 ```
 
-Example response:
-
-```json
-{
-  "success": true,
-  "tasks": []
-}
-```
-
----
-
-## Get One Task
+### Get One Task
 
 ```http
 GET /tasks/:id
 ```
 
-Example:
-
-```text
-GET /tasks/68d123456789abcdef123456
-```
-
----
-
-## Update Task
+### Update Task
 
 ```http
 PUT /tasks/:id
 ```
 
-The updated task information is sent to the backend and validated before the database is changed.
-
----
-
-## Delete Task
+### Delete Task
 
 ```http
 DELETE /tasks/:id
 ```
 
-The backend first verifies that the task exists before deleting it.
-
 ---
 
 # 🛡️ Data Validation
 
-TaskDuty uses **Zod** to validate incoming task data on the backend.
+TaskDuty uses **Zod** to validate incoming data.
 
-The validation layer checks information such as:
+Validation is used for:
 
-* Title
-* Description
-* Due date
-* Category
+* Registration data
+* Login data
+* Task creation
+* Task updates
+* MongoDB task IDs
+* Due dates
+* Categories
 * Completion status
-* MongoDB task ID
 
-For example, the due date must follow the format:
-
-```text
-YYYY-MM-DD
-```
-
-An invalid request is rejected before the data is stored in MongoDB.
-
-This provides an additional layer of protection and prevents invalid data from entering the database.
+Invalid requests are rejected before database operations are performed.
 
 ---
 
 # 🗄️ Database
 
-TaskDuty uses **MongoDB** as its database and **Mongoose** as the ODM.
+TaskDuty uses **MongoDB** as its database and **Mongoose** as its ODM.
 
-The task model contains:
+## User
 
-```text
-_id
-title
-description
-dueDate
-category
-completed
-createdAt
-updatedAt
-```
+A user contains account information required for authentication.
 
-The `completed` field is a Boolean value and defaults to:
+Conceptually:
 
 ```text
-false
+User
+├── _id
+├── name
+├── email
+├── password
+├── createdAt
+└── updatedAt
 ```
 
-This means a newly created task starts as pending unless its completion status is changed.
+Passwords are stored as hashes rather than plain-text passwords.
+
+## Task
+
+A task contains:
+
+```text
+Task
+├── _id
+├── title
+├── description
+├── dueDate
+├── category
+├── completed
+├── userId
+├── createdAt
+└── updatedAt
+```
+
+`userId` connects each task to its owner.
+
+---
+
+# 🔗 User and Task Relationship
+
+The relationship between users and tasks can be represented as:
+
+```text
+User
+ │
+ │ _id
+ │
+ └─────────────┐
+               │
+               ▼
+             Task
+             userId
+```
+
+When a user creates a task:
+
+```text
+Authenticated user
+      ↓
+req.userId
+      ↓
+Task.create({
+   ...
+   userId: req.userId
+})
+```
+
+This creates ownership between the user and the task.
 
 ---
 
 # ⚛️ React Concepts Used
 
-The project gave me practical experience with several React concepts.
+The frontend provides practical experience with:
 
 ### `useState`
 
-Used to manage:
+Used for:
 
 * Tasks
 * Form values
-* Loading state
-* Error state
+* Loading states
+* Error states
 * Filter values
 * Delete modal state
 
 ### `useEffect`
 
-Used to fetch tasks when the My Tasks page loads.
+Used for fetching task information from the backend.
 
 ### Props
 
-The `TaskCard` component receives task information from the parent component.
-
-This makes the component reusable for displaying different tasks.
+Reusable components such as `TaskCard` receive information through props.
 
 ### React Router
 
-React Router is used for navigation between pages.
+Used for navigation between pages.
 
 Routes include:
 
 ```text
 /
- /new-task
- /tasks
- /edit-task/:id
+/new-task
+/tasks
+/edit-task/:id
 ```
 
 ### `useParams`
 
-Used to retrieve the task ID from:
-
-```text
-/edit-task/:id
-```
+Used to retrieve task IDs from dynamic URLs.
 
 ### Controlled Inputs
 
-The task forms use React state to control their input values.
+Forms use React state to control input values.
 
 ---
 
 # 🎨 UI and UX
 
-The interface was built with **Tailwind CSS**.
+TaskDuty uses **Tailwind CSS** for styling.
 
-The design focuses on:
+The interface focuses on:
 
 * Simple navigation
 * Clear task cards
 * Responsive layouts
-* Clear status indicators
+* Status indicators
 * Confirmation before destructive actions
 * Loading feedback
 * Error feedback
-* Filtering functionality
-
-The application also includes responsive layouts for smaller screen sizes.
+* Filtering
 
 ---
 
 # 🔐 Environment Variables
 
-Sensitive configuration values are stored in an environment file rather than being committed to Git.
+Sensitive configuration values are stored in `.env`.
 
 Example:
 
 ```env
 PORT=3000
 MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
 ```
 
-The `.env` file is excluded from Git using `.gitignore`.
-
-The project also ignores dependencies such as:
-
-```text
-node_modules/
-```
+The `.env` file should never be committed to Git.
 
 ---
 
@@ -588,7 +851,7 @@ Navigate into the project:
 cd Task-manager
 ```
 
-Install the root dependencies:
+Install root dependencies:
 
 ```bash
 npm install
@@ -601,16 +864,10 @@ cd web
 npm install
 ```
 
-Return to the root:
-
-```bash
-cd ..
-```
-
 Install backend dependencies:
 
 ```bash
-cd api
+cd ../api
 npm install
 ```
 
@@ -624,20 +881,19 @@ cd ..
 
 # 🔧 Environment Setup
 
-Inside the `api` folder, create a `.env` file:
+Inside `api`, create a `.env` file.
 
 ```env
 PORT=3000
 MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
 ```
 
-Replace the MongoDB connection string with your own MongoDB connection string.
+Replace the example values with your own configuration.
 
 ---
 
 # ▶️ Running the Application
-
-The project is configured to run the frontend and backend together.
 
 From the root directory:
 
@@ -645,13 +901,13 @@ From the root directory:
 npm run dev
 ```
 
-The frontend runs on:
+Frontend:
 
 ```text
 http://localhost:5173
 ```
 
-The backend runs on:
+Backend:
 
 ```text
 http://localhost:3000
@@ -659,139 +915,235 @@ http://localhost:3000
 
 ---
 
-# 🧪 Testing the Application
+# 🧪 Backend Testing With Postman/ThunderClient
 
-After starting the application:
+Stage 2 can be tested through Postman.
 
-1. Open the frontend.
-2. Navigate to **New Task**.
-3. Create a task.
-4. Navigate to **My Tasks**.
-5. Confirm that the task appears.
-6. Open the task's **Edit** option.
-7. Modify the task.
-8. Save the changes.
-9. Return to My Tasks.
-10. Test the category filter.
-11. Test the completion-status filter.
-12. Test the delete functionality.
-13. Confirm the delete modal before deleting a task.
+Recommended flow:
+
+```text
+1. Register User A
+        ↓
+2. Login User A
+        ↓
+3. Copy User A's JWT
+        ↓
+4. Create tasks as User A
+        ↓
+5. Get User A's tasks
+        ↓
+6. Get one task
+        ↓
+7. Update the task
+        ↓
+8. Delete the task
+```
+
+Authorization header:
+
+```text
+Authorization: Bearer <JWT>
+```
+
+---
+
+# 🧪 Testing User-Scoped Authorization
+
+A second user can be created to verify that authorization is working.
+
+```text
+User A creates Task A
+User B creates Task B
+```
+
+Then test:
+
+```text
+User A token + Task A → Allowed ✅
+User B token + Task B → Allowed ✅
+
+User A token + Task B → Not returned ❌
+User B token + Task A → Not returned ❌
+```
+
+This proves that authentication alone is not being relied upon and that task ownership is enforced.
+
+---
+
+# 🧠 Request Flow
+
+A protected request now follows:
+
+```text
+Client
+  │
+  │ Authorization: Bearer JWT
+  ▼
+Express Server
+  │
+  ▼
+Task Route
+  │
+  ▼
+authMiddleware
+  │
+  │ Verify JWT
+  │ Set req.userId
+  ▼
+Task Controller
+  │
+  │ Validate request
+  │ Check task ownership
+  ▼
+Mongoose Model
+  │
+  ▼
+MongoDB
+  │
+  ▼
+Response
+```
+
+---
+
+# 🧠 Example: Creating a Task
+
+```text
+Authenticated User
+      │
+      │ POST /tasks
+      ▼
+tasksRoutes
+      │
+      ▼
+authMiddleware
+      │
+      │ verify JWT
+      │ req.userId
+      ▼
+createTask Controller
+      │
+      │ Zod validation
+      ▼
+Task.create()
+      │
+      │ userId: req.userId
+      ▼
+MongoDB
+      │
+      ▼
+Task created for that user
+```
+
+---
+
+# 🧠 Example: Updating a Task
+
+```text
+User
+ │
+ │ PUT /tasks/:id
+ ▼
+authMiddleware
+ │
+ │ req.userId
+ ▼
+updateTask
+ │
+ ├── Validate task ID
+ ├── Validate request body
+ │
+ ▼
+Task.findOne({
+   _id: requestedTaskId,
+   userId: req.userId
+})
+ │
+ ▼
+Ownership confirmed
+ │
+ ▼
+Update + save
+```
+
+This prevents one authenticated user from modifying another user's task.
 
 ---
 
 # 📚 What I Learned
 
-Building TaskDuty helped me understand how the different parts of a full-stack application communicate with each other.
+Building TaskDuty helped me understand how different parts of a full-stack application work together.
 
 Some of the major concepts I practiced include:
 
 * Building React applications with TypeScript
 * Managing React state
 * Working with controlled forms
-* Using React Router
-* Creating reusable components
+* React Router
+* Reusable React components
 * Fetching data from APIs
 * Building REST APIs with Express
-* Implementing CRUD operations
+* CRUD operations
 * Connecting Express to MongoDB
-* Using Mongoose models
-* Validating API data with Zod
-* Handling API errors
-* Managing loading states
-* Filtering data on the frontend
-* Working with environment variables
-* Structuring a full-stack project
-* Using Git and GitHub for version control
+* Working with Mongoose
+* Zod validation
+* User registration and login
+* Password hashing with bcrypt
+* JWT authentication
+* Authentication middleware
+* Authorization
+* Protected API routes
+* User-scoped data
+* Resource ownership
+* Express routers
+* Controllers
+* Separating backend responsibilities
+* Postman API testing
+* Environment variables
+* Git and GitHub
 
-One of the most important lessons from the project was understanding that a full-stack application is not just about creating the UI.
+One of the biggest lessons from Stage 2 was understanding that:
 
-The frontend, backend, validation layer, API, and database all have different responsibilities and need to communicate correctly.
+> **Authentication and authorization are not the same thing.**
 
----
+Authentication tells the backend **who the user is**.
 
-# 🧠 Key Development Flow
+Authorization determines **what that user is allowed to access or modify**.
 
-The general flow of creating and managing a task is:
+Another major lesson was understanding why backend structure matters.
 
-```text
-User
- │
- │ fills task form
- ▼
-React Frontend
- │
- │ POST /tasks
- ▼
-Express API
- │
- │ Zod validation
- ▼
-Mongoose
- │
- │ save
- ▼
-MongoDB
- │
- │ task created
- ▼
-Express API
- │
- │ response
- ▼
-React Frontend
- │
- ▼
-Task appears in My Tasks
-```
-
-For editing:
+Instead of putting every endpoint and database operation inside `server.ts`, the backend now separates responsibilities between:
 
 ```text
-User
- │
- │ clicks Edit
- ▼
-React Router
- │
- │ /edit-task/:id
- ▼
-GET /tasks/:id
- │
- ▼
-MongoDB
- │
- ▼
-Task data returned
- │
- ▼
-Edit Form
- │
- │ PUT /tasks/:id
- ▼
-Express
- │
- ▼
-MongoDB updated
+Routes
+Middleware
+Controllers
+Models
+Validations
 ```
+
+This makes the application easier to understand, maintain, debug, and extend.
 
 ---
 
 # 🚧 Future Improvements
 
-Possible improvements for future versions include:
+Possible improvements include:
 
-* User authentication
-* Individual user task ownership
-* Search by task title
-* Sorting by due date
-* Marking tasks as completed directly from the task card
-* Pagination for larger task lists
-* Better skeleton loading states
+* Connect the authenticated backend flow fully to the frontend
+* Add frontend login and registration pages
+* Store and manage authentication state on the client
+* Search tasks by title
+* Sort tasks by due date
+* Mark tasks completed directly from task cards
+* Pagination
 * Toast notifications
-* Improved form validation messages
-* Task priority levels
-* Task deadlines and reminders
-* Dashboard with task statistics
+* Improved validation feedback
+* Task priorities
+* Deadlines and reminders
+* Dashboard statistics
+* Password reset
+* Email verification
 * Deployment of the frontend and backend
 
 ---
@@ -803,13 +1155,10 @@ Possible improvements for future versions include:
 Computer Science Student
 Full-Stack Developer / Aspiring Software Developer
 
-Built as part of my **Techstudio Academy internship**.
+Built as part of my **Techstudio Academy Internship**.
 
 ---
 
 # 📄 License
 
 This project was created for educational and internship purposes.
-
-```
-```

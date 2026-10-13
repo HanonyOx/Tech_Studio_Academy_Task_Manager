@@ -40,17 +40,20 @@ export const createTask = async (req: Request, res: Response) => {
 };
 
 export const getTasks = async (req: Request, res: Response) => {
-  if (!req.userId) {
-    return res.status(401).json({
-      success: false,
-      message: "Unauthorized",
-    });
-  }
+  const search = req.query.search as string;
 
   try {
     const tasks = await Task.find({
-      userId: req.userId,
+      ...(search
+        ? {
+            $or: [
+              { title: { $regex: search, $options: "i" } },
+              { description: { $regex: search, $options: "i" } },
+            ],
+          }
+        : {}),
     });
+
 
     return res.json({
       success: true,
@@ -190,7 +193,7 @@ export const deleteTask = async (req: Request, res: Response) => {
       });
     }
 
-    
+
     if (!req.userId) {
       return res.status(401).json({
         success: false,

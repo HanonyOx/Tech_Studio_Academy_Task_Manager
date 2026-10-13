@@ -18,9 +18,10 @@ const MyTasks = () => {
 
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch("http://localhost:3000/tasks")
+    fetch(`http://localhost:3000/tasks?search=${encodeURIComponent(search)}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to load tasks");
@@ -36,12 +37,10 @@ const MyTasks = () => {
         setError(error.message);
         setLoading(false);
       });
-  }, []);
+  }, [search]);
 
   const handleDelete = (id: string) => {
-    setTasks((currentTasks) =>
-      currentTasks.filter((task) => task._id !== id)
-    );
+    setTasks((currentTasks) => currentTasks.filter((task) => task._id !== id));
   };
 
   const filteredTasks = tasks.filter((task) => {
@@ -79,6 +78,26 @@ const MyTasks = () => {
 
         {/* Filters */}
         <div className="mt-8 flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:flex-row lg:mx-10">
+          
+          {/* Search Input */}
+          <div className="flex-1">
+            <label
+              htmlFor="search"
+              className="mb-2 block text-sm font-semibold text-gray-700"
+            >
+              Search Tasks
+            </label>
+
+            <input
+              id="search"
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search tasks..."
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+            />
+          </div>
+
           {/* Category Input */}
           <div className="flex-1">
             <label
@@ -128,9 +147,7 @@ const MyTasks = () => {
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-purple-600"></div>
               </div>
             ) : error ? (
-              <p className="col-span-full text-center text-red-500">
-                {error}
-              </p>
+              <p className="col-span-full text-center text-red-500">{error}</p>
             ) : filteredTasks.length === 0 ? (
               <p className="col-span-full py-10 text-center text-gray-500">
                 No tasks match your filters.

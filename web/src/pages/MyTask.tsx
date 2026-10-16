@@ -1,6 +1,7 @@
 import TaskCard from "../components/TaskCard";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import API_URL from "../config";
 
 type Task = {
   _id: string;
@@ -21,7 +22,7 @@ const MyTasks = () => {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch(`http://localhost:3000/tasks?search=${encodeURIComponent(search)}`)
+    fetch(`${API_URL}}/tasks?search=${encodeURIComponent(search)}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to load tasks");

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import API_URL from "../config";
 
 type Task = {
   _id: string;
@@ -22,7 +23,7 @@ const EditTask = () => {
   const [category, setCategory] = useState("");
 
   useEffect(() => {
-    fetch(`http://localhost:3000/tasks/${id}`)
+    fetch(`${API_URL}/tasks/${id}`)
       .then((response) => response.json())
       .then((data) => {
         setTask(data.task);
@@ -53,7 +54,7 @@ const EditTask = () => {
       completed: task.completed,
     };
 
-    const response = await fetch(`http://localhost:3000/tasks/${id}`, {
+    const response = await fetch(`${API_URL}/tasks/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

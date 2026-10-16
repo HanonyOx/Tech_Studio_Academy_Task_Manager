@@ -1,6 +1,7 @@
 import { Trash2, SquarePen, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
+import API_URL from "../config";
 
 interface TaskCardProps {
   _id: string;
@@ -25,7 +26,7 @@ const TaskCard = ({
   const [isCompleted, setIsCompleted] = useState(completed);
 
   const handleDelete = async () => {
-    const response = await fetch(`http://localhost:3000/tasks/${_id}`, {
+    const response = await fetch(`${API_URL}/tasks/${_id}`, {
       method: "DELETE",
     });
 

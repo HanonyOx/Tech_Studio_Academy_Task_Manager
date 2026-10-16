@@ -22,7 +22,7 @@ const MyTasks = () => {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch(`${API_URL}}/tasks?search=${encodeURIComponent(search)}`)
+    fetch(`${API_URL}/tasks?search=${encodeURIComponent(search)}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to load tasks");

@@ -42,7 +42,7 @@ const TaskCard = ({
 
   const handleComplete = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/tasks/${_id}`, {
+      const response = await fetch(`${API_URL}/tasks/${_id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

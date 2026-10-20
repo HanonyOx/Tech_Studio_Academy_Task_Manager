@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import API_URL from "../config";
 
 const NewTask = () => {
@@ -9,6 +9,7 @@ const NewTask = () => {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Stores validation error messages
   const [errors, setErrors] = useState({
@@ -19,18 +20,12 @@ const NewTask = () => {
     general: "",
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Reset previous errors
-    setErrors({
-      title: "",
-      description: "",
-      dueDate: "",
-      category: "",
-      general: "",
-    });
+    if (loading) return;
 
+    // Reset previous errors
     const newErrors = {
       title: "",
       description: "",
@@ -38,6 +33,8 @@ const NewTask = () => {
       category: "",
       general: "",
     };
+
+    setErrors(newErrors);
 
     // Client-side validation
     if (!title.trim()) {
@@ -56,7 +53,7 @@ const NewTask = () => {
       newErrors.category = "Please select a category";
     }
 
-    // If there are validation errors, show them and stop
+    // Stop if validation fails
     if (
       newErrors.title ||
       newErrors.description ||
@@ -67,37 +64,56 @@ const NewTask = () => {
       return;
     }
 
+    // Retrieve the JWT saved after login
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      navigate("/login", { replace: true });
+      return;
+    }
+
     const taskData = {
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
       dueDate,
       category,
       completed: false,
     };
 
     try {
+      setLoading(true);
+
       const response = await fetch(`${API_URL}/tasks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(taskData),
       });
 
       const data = await response.json();
 
-      // Backend validation error
       if (!response.ok) {
+        // If authentication has failed, return to login
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          window.dispatchEvent(new Event("authChanged"));
+          navigate("/login", { replace: true });
+          return;
+        }
+
         setErrors((previous) => ({
           ...previous,
-          general: data.message || "Failed to create task",
+          general: data.message || "Failed to create task.",
         }));
 
         return;
       }
 
       // Task created successfully
-      navigate("/tasks");
+      navigate("/tasks", { replace: true });
     } catch (error) {
       console.error("Error creating task:", error);
 
@@ -105,6 +121,8 @@ const NewTask = () => {
         ...previous,
         general: "Unable to connect to the server. Please try again.",
       }));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -125,7 +143,10 @@ const NewTask = () => {
           <form onSubmit={handleSubmit}>
             {/* General Error */}
             {errors.general && (
-              <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              <div
+                role="alert"
+                className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600"
+              >
                 {errors.general}
               </div>
             )}
@@ -146,6 +167,7 @@ const NewTask = () => {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Complete React assignment"
+                required
                 className={`mt-2 w-full rounded-lg border px-4 py-3 outline-none ${
                   errors.title
                     ? "border-red-500"
@@ -154,7 +176,9 @@ const NewTask = () => {
               />
 
               {errors.title && (
-                <p className="mt-1 text-sm text-red-500">{errors.title}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.title}
+                </p>
               )}
             </div>
 
@@ -174,6 +198,7 @@ const NewTask = () => {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
                 placeholder="Describe what needs to be done..."
+                required
                 className={`mt-2 w-full rounded-lg border px-4 py-3 outline-none ${
                   errors.description
                     ? "border-red-500"
@@ -203,6 +228,7 @@ const NewTask = () => {
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+                required
                 className={`mt-2 w-full rounded-lg border px-4 py-3 outline-none ${
                   errors.dueDate
                     ? "border-red-500"
@@ -211,7 +237,9 @@ const NewTask = () => {
               />
 
               {errors.dueDate && (
-                <p className="mt-1 text-sm text-red-500">{errors.dueDate}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.dueDate}
+                </p>
               )}
             </div>
 
@@ -229,6 +257,7 @@ const NewTask = () => {
                 name="category"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
+                required
                 className={`mt-2 w-full rounded-lg border bg-white px-4 py-3 outline-none ${
                   errors.category
                     ? "border-red-500"
@@ -252,9 +281,10 @@ const NewTask = () => {
             <div className="mt-8">
               <button
                 type="submit"
-                className="w-full rounded-lg bg-purple-600 px-4 py-3 font-medium text-white transition hover:bg-purple-800"
+                disabled={loading}
+                className="w-full rounded-lg bg-purple-600 px-4 py-3 font-medium text-white transition hover:bg-purple-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Create Task
+                {loading ? "Creating..." : "Create Task"}
               </button>
             </div>
 

@@ -26,47 +26,59 @@ const TaskCard = ({
   const [isCompleted, setIsCompleted] = useState(completed);
 
   const handleDelete = async () => {
-    const response = await fetch(`${API_URL}/tasks/${_id}`, {
-      method: "DELETE",
-    });
-
-    const data = await response.json();
-
-    console.log(data);
-
-    if (response.ok) {
-      setShowDeleteModal(false);
-      onDelete(_id);
-    }
-  };
-
-  const handleComplete = async () => {
     try {
       const response = await fetch(`${API_URL}/tasks/${_id}`, {
-        method: "PUT",
+        method: "DELETE",
         headers: {
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({
-          title,
-          description,
-          dueDate,
-          category,
-          completed: true,
-        }),
       });
 
       const data = await response.json();
 
-      console.log(data);
-
-      if (response.ok) {
-        setIsCompleted(true);
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to delete task");
       }
+
+      setShowDeleteModal(false);
+      onDelete(_id);
     } catch (error) {
-      console.error("Failed to complete task:", error);
+      console.error("Failed to delete task:", error);
     }
   };
+
+ const handleComplete = async () => {
+try {
+const response = await fetch(`${API_URL}/tasks/${_id}`, {
+method: "PUT",
+headers: {
+"Content-Type": "application/json",
+Authorization: `Bearer ${localStorage.getItem("token")}`,
+},
+body: JSON.stringify({
+title,
+description,
+dueDate,
+category,
+completed: true,
+}),
+});
+
+
+const data = await response.json();
+
+if (!response.ok) {
+  throw new Error(data.message || "Failed to complete task");
+}
+
+setIsCompleted(true);
+
+
+} catch (error) {
+console.error("Failed to complete task:", error);
+}
+};
+
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-md">
@@ -129,9 +141,7 @@ const TaskCard = ({
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h2 className="text-xl font-bold text-gray-900">
-              Delete Task?
-            </h2>
+            <h2 className="text-xl font-bold text-gray-900">Delete Task?</h2>
 
             <p className="mt-2 text-sm text-gray-500">
               Are you sure you want to delete this task? This action cannot be

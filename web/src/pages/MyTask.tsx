@@ -22,7 +22,11 @@ const MyTasks = () => {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch(`${API_URL}/tasks?search=${encodeURIComponent(search)}`)
+    fetch(`${API_URL}/tasks?search=${encodeURIComponent(search)}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    })
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to load tasks");
@@ -79,7 +83,6 @@ const MyTasks = () => {
 
         {/* Filters */}
         <div className="mt-8 flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:flex-row lg:mx-10">
-          
           {/* Search Input */}
           <div className="flex-1">
             <label

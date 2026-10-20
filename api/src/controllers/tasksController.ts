@@ -40,10 +40,18 @@ export const createTask = async (req: Request, res: Response) => {
 };
 
 export const getTasks = async (req: Request, res: Response) => {
-  const search = req.query.search as string;
+  if (!req.userId) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+
+  const search = req.query.search as string | undefined;
 
   try {
     const tasks = await Task.find({
+      userId: req.userId,
       ...(search
         ? {
             $or: [
@@ -53,7 +61,6 @@ export const getTasks = async (req: Request, res: Response) => {
           }
         : {}),
     });
-
 
     return res.json({
       success: true,
@@ -182,7 +189,6 @@ export const updateTask = async (req: Request, res: Response) => {
 
 export const deleteTask = async (req: Request, res: Response) => {
   try {
-  
     const idResult = taskIdSchema.safeParse(req.params.id);
 
     if (!idResult.success) {
@@ -192,7 +198,6 @@ export const deleteTask = async (req: Request, res: Response) => {
         errors: idResult.error.issues,
       });
     }
-
 
     if (!req.userId) {
       return res.status(401).json({
@@ -206,7 +211,6 @@ export const deleteTask = async (req: Request, res: Response) => {
       userId: req.userId,
     });
 
-   
     if (!task) {
       return res.status(404).json({
         success: false,
